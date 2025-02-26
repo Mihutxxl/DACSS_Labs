@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "lab1library.h": "c",
+        "stdio.h": "c"
+    }
+}
