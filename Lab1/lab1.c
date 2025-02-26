@@ -12,19 +12,22 @@ int main() {
         {"John", "Laptop", "ok", "PICTURE"},
         {"Mary", "Phone", "@#$%)", "IMAGE"},
         {"Peter", "Phone", "GREAT", "ManyPictures"},
-        {"Ann", "Book", "So GOOD", "Image"}
+        {"Ann", "Book", "So GOOD", "Image"},
+		{"Dan", "Toy", "Excellenthttp", "Photo"}
     };
-    int review_count = 4;
+    int review_count = 5;
 
     // Pipes-and-Filters configuration
     int (*pipeline1[])(Review *, int *) = {
         filter_non_buyers,
+		filter_propaganda,
         filter_profanities,
+		remove_competition_links,
         transform_resize_pictures,
         transform_analyze_sentiment
     };
 
-    process_reviews(reviews, &review_count, pipeline1, 4);
+    process_reviews(reviews, &review_count, pipeline1, 6);
 
     // Print results
     for (int i = 0; i < review_count; i++) {

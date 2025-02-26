@@ -5,6 +5,7 @@ const char *buyers[][2] = {
     {"John", "Laptop"},
     {"Mary", "Phone"},
     {"Ann", "Book"},
+    {"Dan", "Toy"},
     {NULL, NULL} // End marker
 };
 
@@ -75,9 +76,27 @@ int filter_profanities(Review *reviews, int *count) {
     return 0;
 }
 
+int filter_propaganda(Review *reviews, int *count) {
+    int j = 0;
+    for (int i = 0; i < *count; i++) {
+        if(!contains_political_propaganda(reviews[i].reviewtext)) {
+            reviews[j++] = reviews[i];
+        }
+    }
+    *count = j;
+    return 0;
+}
+
 int transform_resize_pictures(Review *reviews, int *count) {
     for (int i = 0; i < *count; i++) {
         resize_picture(reviews[i].attachment);
+    }
+    return 0;
+}
+
+int remove_competition_links(Review *reviews, int *count) {
+    for (int i = 0; i < *count; i++) {
+        remove_competitor_links(reviews[i].reviewtext);
     }
     return 0;
 }
