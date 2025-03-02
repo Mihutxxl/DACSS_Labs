@@ -107,3 +107,41 @@ int transform_analyze_sentiment(Review *reviews, int *count) {
     }
     return 0;
 }
+
+void process_blackboard(Blackboard *bb) {
+    for(int i = 0; i < bb -> count; i++) {
+        if(!is_buyer(bb->reviews[i].username, bb->reviews[i].productname)) {
+            bb->processed[i] = 1;
+        }
+    }
+
+    for(int i = 0; i < bb -> count; i++) {
+        if(!bb->processed[i] && contains_profanity(bb->reviews[i].reviewtext)) {
+            bb->processed[i] = 1;
+        }
+    }
+
+    for(int i = 0; i < bb -> count; i++) {
+        if(!bb->processed[i] && contains_political_propaganda(bb->reviews[i].reviewtext)) {
+            bb->processed[i] = 1;
+        }
+    }
+
+    for(int i = 0 ; i < bb -> count; i++) {
+        if(!bb->processed[i]) {
+            remove_competitor_links(bb->reviews[i].reviewtext);
+        }
+    }
+
+    for(int i = 0 ; i < bb -> count; i++) {
+        if(!bb->processed[i]) {
+            resize_picture(bb->reviews[i].attachment);
+        }
+    }
+
+    for(int i = 0 ; i < bb -> count; i++) {
+        if(!bb->processed[i]) {
+            analyze_sentiment(bb->reviews[i].reviewtext);
+        }
+    }
+}

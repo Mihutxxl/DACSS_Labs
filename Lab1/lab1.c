@@ -33,5 +33,29 @@ int main() {
     for (int i = 0; i < review_count; i++) {
         printf("%s, %s, %s, %s\n", reviews[i].username, reviews[i].productname, reviews[i].reviewtext, reviews[i].attachment);
     }
+    
+    //Blackboard configuration
+    Blackboard bb = {
+        .reviews = {
+            {"John", "Laptop", "ok", "PICTURE"},
+            {"Mary", "Phone", "@#$%)", "IMAGE"},
+            {"Peter", "Phone", "GREAT", "ManyPictures"},
+            {"Ann", "Book", "So GOOD", "Image"},
+            {"Dan", "Toy", "Excellenthttp", "Photo"}
+        },
+        .count = 5,
+        .processed = {0} 
+    };
+
+    process_blackboard(&bb);
+
+    // Print results
+    printf("\nBlackboard Processed Reviews:\n");
+    for (int i = 0; i < bb.count; i++) {
+        if (!bb.processed[i]) {
+            printf("%s, %s, %s, %s\n", bb.reviews[i].username, bb.reviews[i].productname, bb.reviews[i].reviewtext, bb.reviews[i].attachment);
+        }
+    }
+
     return 0;
 }

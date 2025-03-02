@@ -6,6 +6,7 @@
 #include <ctype.h>
 
 #define MAX_LENGTH 256
+#define MAX_REVIEWS 100
 
 typedef struct {
     char username[MAX_LENGTH];
@@ -13,6 +14,12 @@ typedef struct {
     char reviewtext[MAX_LENGTH];
     char attachment[MAX_LENGTH];
 } Review;
+
+typedef struct {
+    Review reviews[MAX_REVIEWS];
+    int count;
+    int processed[MAX_REVIEWS];
+} Blackboard;
 
 int is_buyer(const char *username, const char *productname);
 int contains_profanity(const char *text);
@@ -25,5 +32,6 @@ int filter_non_buyers(Review *reviews, int *count);
 int filter_profanities(Review *reviews, int *count);
 int transform_resize_pictures(Review *reviews, int *count);
 int transform_analyze_sentiment(Review *reviews, int *count);
+void process_blackboard(Blackboard *bb);
 
 #endif // LAB1LIBRARY_H
