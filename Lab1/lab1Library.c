@@ -139,8 +139,9 @@ void process_blackboard(Blackboard *bb) {
         }
     }
 
+    // Fix: Only apply sentiment if not already modified
     for(int i = 0 ; i < bb -> count; i++) {
-        if(!bb->processed[i]) {
+        if(!bb->processed[i] && !strchr(bb->reviews[i].reviewtext, '+') && !strchr(bb->reviews[i].reviewtext, '-')) {
             analyze_sentiment(bb->reviews[i].reviewtext);
         }
     }
