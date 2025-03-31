@@ -85,29 +85,6 @@ void subscribe(char *subscriberId, char *eventType, EventHandler handler) {
     printf("New subscriber %s registered for event type: %s\n", subscriberId, eventType);
 }
 
-// Unsubscribe from a specific event type
-void unsubscribe(char *subscriberId, char *eventType) {
-    for (int i = 0; i < eventBus.subscriberCount; i++) {
-        if (strcmp(eventBus.subscribers[i].id, subscriberId) == 0) {
-            // Found the subscriber, now find and remove the event type
-            for (int j = 0; j < eventBus.subscribers[i].eventTypeCount; j++) {
-                if (strcmp(eventBus.subscribers[i].eventTypes[j], eventType) == 0) {
-                    // Remove this event type by shifting the remaining types
-                    for (int k = j; k < eventBus.subscribers[i].eventTypeCount - 1; k++) {
-                        strcpy(eventBus.subscribers[i].eventTypes[k], eventBus.subscribers[i].eventTypes[k + 1]);
-                    }
-                    eventBus.subscribers[i].eventTypeCount--;
-                    printf("Subscriber %s unsubscribed from event type: %s\n", subscriberId, eventType);
-                    return;
-                }
-            }
-            printf("Subscriber %s was not subscribed to event type: %s\n", subscriberId, eventType);
-            return;
-        }
-    }
-    printf("Subscriber %s not found\n", subscriberId);
-}
-
 // Publish an event
 void publish(char *eventType, void *data, char *sourceId) {
     Event event;
@@ -121,17 +98,13 @@ void publish(char *eventType, void *data, char *sourceId) {
         for (int j = 0; j < eventBus.subscribers[i].eventTypeCount; j++) {
             if (strcmp(eventBus.subscribers[i].eventTypes[j], eventType) == 0) {
                 eventBus.subscribers[i].handler(&event);
-                break; // Found a match, no need to check other event types for this subscriber
+                break;
             }
         }
     }
 }
 
-//
 // Sensor simulation
-//
-
-// Generate random sensor data
 float generateSensorData(char *sensorType) {
     float value;
     
@@ -148,99 +121,36 @@ float generateSensorData(char *sensorType) {
     return value;
 }
 
-// Simulate sensor reading
 void simulateSensorReading(char *sensorType, char *sensorId) {
     float *data = malloc(sizeof(float));
     *data = generateSensorData(sensorType);
     publish(sensorType, data, sensorId);
 }
 
-//
-// Display handlers
-//
-
-// Numeric display handler
 void numericDisplayHandler(Event *event) {
-    float value = *(float*)event->data;
-    printf("[NumericDisplay] Value from %s: %.2f\n", event->sourceId, value);
-    free(event->data); // Free the allocated data
+    float *value = (float *)event->data;
+    printf("[NumericDisplay] Value from %s: %.2f\n", event->sourceId, *value);
 }
 
-// Max value display handler
 void maxValueDisplayHandler(Event *event) {
-    static float maxValues[MAX_EVENT_TYPES];
-    static char maxValueTypes[MAX_EVENT_TYPES][MAX_TYPE_LENGTH];
-    static int maxValueCount = 0;
-    
-    float value = *(float*)event->data;
-    int i;
-    int found = 0;
-    
-    // Check if we have seen this event type before
-    for (i = 0; i < maxValueCount; i++) {
-        if (strcmp(maxValueTypes[i], event->type) == 0) {
-            found = 1;
-            if (value > maxValues[i]) {
-                maxValues[i] = value;
-                printf("[MaxValueDisplay] New max value for %s: %.2f from %s\n", event->type, value, event->sourceId);
-            } else {
-                printf("[MaxValueDisplay] Value for %s: %.2f from %s (max: %.2f)\n", event->type, value, event->sourceId, maxValues[i]);
-            }
-            break;
-        }
-    }
-    
-    // If this is a new event type, add it
-    if (!found && maxValueCount < MAX_EVENT_TYPES) {
-        strcpy(maxValueTypes[maxValueCount], event->type);
-        maxValues[maxValueCount] = value;
-        printf("[MaxValueDisplay] First value for %s: %.2f from %s\n", event->type, value, event->sourceId);
-        maxValueCount++;
+    static float maxTemp = -999.9, maxHumidity = -999.9, maxWater = -999.9;
+    float *value = (float *)event->data;
+
+    if (strcmp(event->type, "Temperature") == 0 && *value > maxTemp) {
+        maxTemp = *value;
+        printf("[MaxValueDisplay] New max temperature: %.2f from %s\n", maxTemp, event->sourceId);
+    } else if (strcmp(event->type, "Humidity") == 0 && *value > maxHumidity) {
+        maxHumidity = *value;
+        printf("[MaxValueDisplay] New max humidity: %.2f from %s\n", maxHumidity, event->sourceId);
+    } else if (strcmp(event->type, "WaterLevel") == 0 && *value > maxWater) {
+        maxWater = *value;
+        printf("[MaxValueDisplay] New max water level: %.2f from %s\n", maxWater, event->sourceId);
     }
 }
 
-// Text display handler
 void textDisplayHandler(Event *event) {
-    float value = *(float*)event->data;
-    printf("[TextDisplay] Reading from %s - %s: ", event->sourceId, event->type);
-    
-    if (strcmp(event->type, "Temperature") == 0) {
-        printf("%.2f°C ", value);
-        if (value < 18) printf("(Cold)");
-        else if (value > 30) printf("(Hot)");
-        else printf("(Normal)");
-    } else if (strcmp(event->type, "Humidity") == 0) {
-        printf("%.2f%% ", value);
-        if (value < 40) printf("(Dry)");
-        else if (value > 70) printf("(Humid)");
-        else printf("(Normal)");
-    } else if (strcmp(event->type, "WaterLevel") == 0) {
-        printf("%.2fm ", value);
-        if (value < 2) printf("(Low)");
-        else if (value > 8) printf("(High)");
-        else printf("(Normal)");
-    } else {
-        printf("%.2f", value);
-    }
-    
-    printf("\n");
-}
-
-//
-// News agency simulation
-//
-
-// News subscriber handler
-void newsSubscriberHandler(Event *event) {
-    char *news = (char*)event->data;
-    printf("[NewsSubscriber] Received news on %s from %s: %s\n", event->type, event->sourceId, news);
-}
-
-// Publish news
-void publishNews(char *agency, char *domain, char *news) {
-    char *newsData = malloc(MAX_DATA_LENGTH);
-    strcpy(newsData, news);
-    publish(domain, newsData, agency);
+    float *value = (float *)event->data;
+    printf("[TextDisplay] %s reported a %s value of %.2f\n", event->sourceId, event->type, *value);
 }
 
 // Main function
@@ -250,17 +160,13 @@ int main() {
     // Register display subscribers
     subscribe("NumericDisplay1", "Temperature", numericDisplayHandler);
     subscribe("NumericDisplay1", "Humidity", numericDisplayHandler);
+    subscribe("NumericDisplay1", "WaterLevel", numericDisplayHandler);
     subscribe("MaxValueDisplay1", "Temperature", maxValueDisplayHandler);
     subscribe("MaxValueDisplay1", "WaterLevel", maxValueDisplayHandler);
+    subscribe("MaxValueDisplay1", "Humidity", maxValueDisplayHandler);
     subscribe("TextDisplay1", "Temperature", textDisplayHandler);
     subscribe("TextDisplay1", "WaterLevel", textDisplayHandler);
     subscribe("TextDisplay1", "Humidity", textDisplayHandler);
-    
-    // Register news subscribers
-    subscribe("Person1", "Sports", newsSubscriberHandler);
-    subscribe("Person1", "Politics", newsSubscriberHandler);
-    subscribe("Person2", "Culture", newsSubscriberHandler);
-    subscribe("Person2", "Sports", newsSubscriberHandler);
     
     // Simulate sensor readings
     printf("\n--- Simulating Sensor Readings ---\n");
@@ -268,25 +174,6 @@ int main() {
     simulateSensorReading("Temperature", "TemperatureSensorArad");
     simulateSensorReading("WaterLevel", "WaterLevelSensorTimisoara");
     simulateSensorReading("Humidity", "HumiditySensorArad");
-    
-    // Simulate news publishing
-    printf("\n--- Simulating News Publishing ---\n");
-    publishNews("NewsAgency1", "Sports", "Local team wins championship");
-    publishNews("NewsAgency2", "Politics", "New government policies announced");
-    publishNews("NewsAgency1", "Culture", "New museum opening next month");
-    
-    // Demonstrate unsubscribe
-    printf("\n--- Demonstrating Unsubscribe ---\n");
-    unsubscribe("Person1", "Politics");
-    publishNews("NewsAgency3", "Politics", "International summit begins");
-    
-    // Demonstrate subscribing to a new event type
-    printf("\n--- Demonstrating New Subscription ---\n");
-    subscribe("Person1", "Culture", newsSubscriberHandler);
-    publishNews("NewsAgency1", "Culture", "Famous artist exhibition opens today");
-    
-    // Clean up any allocated memory
-    // In a real application, we would free all allocated resources here
     
     return 0;
 }
