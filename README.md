@@ -26,3 +26,23 @@ Ann, Book, So GOOD+, image
 In both architectural versions, you will implement a collection of specific reusable components handling the various features. It should be easy for your company to reuse them in order to quickly assemble a new custom version of the automatic reviews moderator.
 
 Between certain steps (tasks), there are logical order relationships, while other steps can be done in any order. As a general rule, tasks that eliminate messages should be performed before tasks that transform messages (it makes no sense to first resize pictures and then identify that the message contains profanities, which will cause the message to be eliminated). However, there are no preferred orderings between the different types of eliminator tasks.
+
+# Lab 2
+Event-driven application1: monitoring sensors
+
+There are multiple types of sensors (TemperatureSensor, WaterlevelSensor, HumiditySensor, etc.) and multiple sensor instances of each type (TemperatureSensorTimisoara, TemperatureSensorArad, ...). In the implemented application, the sensors will be simulated by simple data sources that generate random data. There are different types of displays (NumericDisplay, MaxValueDisplay, TextDisplay). There can be multiple display instances of each type of display. Each display instance can choose to receive data from certain types of sensors (Temperature, WaterLevel, Humidity, ...) and will receive data from all sensor instances of that type.
+Event-driven application2: news agencies and subscribers
+
+There are multiple news agencies that publish news on various domains (sports, politics, culture, etc.). Each agency can publish news from multiple domains. Different people subscribe to receive news from their domains of interest. Each person can subscribe to one or more domains, and can change the domain/domains to which they are subscribed.
+EventBus infrastructure: Choice1 - Using GreenRobot
+
+A tutorial on how to get started with GreenRobot and further documentation is available at link
+EventBus infrastructure: Choice 2 - Implementat your own very simple BasicEventBus
+
+The BasicEventBus infrastructure must allow the following:
+allows interaction between Publishers and Subscribers in the same process
+Publisher components publish events of different types, with possible data attached to the event
+Subscriber components register for different types of events. The EventBus infrastructure will send them notifications when these events occur
+Subscriber components do not need to know in advance the Publisher components that generate the events they subscribe to, and Publisher components do not need to know the Subscriber components that receive notifications
+Event types are not fixed in advance, each application can define its own system of event types.
+In a very simple implementation of the BasicEventBus, there is a fixed Subscriber interface that must be implemented by any component that wants to be a subscriber to some event types. The class diagram of such a BasicEventBus is given in Lecture3 slides
