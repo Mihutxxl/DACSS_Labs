@@ -7,9 +7,13 @@
 #define MAX_EVENT_TYPES 20
 #define MAX_SENSORS 50
 #define MAX_DISPLAYS 50
+#define MAX_NEWS_AGENCIES 20
+#define MAX_PEOPLE 50
 #define MAX_TYPE_LENGTH 50
 #define MAX_ID_LENGTH 100
 #define MAX_DATA_LENGTH 256
+#define MAX_NEWS_LENGTH 512
+#define MAX_DOMAIN_LENGTH 50
 
 // Event structure
 typedef struct Event {
@@ -34,8 +38,34 @@ typedef struct EventBus {
     int subscriberCount;
 } EventBus;
 
-// Global EventBus instance
+// News structure
+typedef struct News {
+    char domain[MAX_DOMAIN_LENGTH];
+    char content[MAX_NEWS_LENGTH];
+    char agency[MAX_ID_LENGTH];
+    time_t timestamp;
+} News;
+
+// News Agency structure
+typedef struct NewsAgency {
+    char id[MAX_ID_LENGTH];
+    char domains[MAX_EVENT_TYPES][MAX_DOMAIN_LENGTH]; // Domains the agency publishes news on
+    int domainCount;
+} NewsAgency;
+
+// Person structure
+typedef struct Person {
+    char id[MAX_ID_LENGTH];
+    char interestedDomains[MAX_EVENT_TYPES][MAX_DOMAIN_LENGTH]; // Domains the person is interested in
+    int domainCount;
+} Person;
+
+// Global variables
 EventBus eventBus;
+NewsAgency newsAgencies[MAX_NEWS_AGENCIES];
+int newsAgencyCount = 0;
+Person people[MAX_PEOPLE];
+int peopleCount = 0;
 
 // Initialize the EventBus
 void initEventBus() {
@@ -85,6 +115,28 @@ void subscribe(char *subscriberId, char *eventType, EventHandler handler) {
     printf("New subscriber %s registered for event type: %s\n", subscriberId, eventType);
 }
 
+// Unsubscribe from an event type
+void unsubscribe(char *subscriberId, char *eventType) {
+    for (int i = 0; i < eventBus.subscriberCount; i++) {
+        if (strcmp(eventBus.subscribers[i].id, subscriberId) == 0) {
+            for (int j = 0; j < eventBus.subscribers[i].eventTypeCount; j++) {
+                if (strcmp(eventBus.subscribers[i].eventTypes[j], eventType) == 0) {
+                    // Remove this event type by shifting the remaining ones
+                    for (int k = j; k < eventBus.subscribers[i].eventTypeCount - 1; k++) {
+                        strcpy(eventBus.subscribers[i].eventTypes[k], eventBus.subscribers[i].eventTypes[k + 1]);
+                    }
+                    eventBus.subscribers[i].eventTypeCount--;
+                    printf("Subscriber %s unsubscribed from event type: %s\n", subscriberId, eventType);
+                    return;
+                }
+            }
+            printf("Subscriber %s was not subscribed to event type: %s\n", subscriberId, eventType);
+            return;
+        }
+    }
+    printf("Subscriber %s not found\n", subscriberId);
+}
+
 // Publish an event
 void publish(char *eventType, void *data, char *sourceId) {
     Event event;
@@ -102,6 +154,171 @@ void publish(char *eventType, void *data, char *sourceId) {
             }
         }
     }
+}
+
+// Register a news agency
+int registerNewsAgency(char *agencyId) {
+    if (newsAgencyCount >= MAX_NEWS_AGENCIES) {
+        printf("Max news agencies reached!\n");
+        return -1;
+    }
+    
+    strcpy(newsAgencies[newsAgencyCount].id, agencyId);
+    newsAgencies[newsAgencyCount].domainCount = 0;
+    
+    printf("News agency %s registered\n", agencyId);
+    return newsAgencyCount++;
+}
+
+// Add a domain to a news agency
+void addDomainToAgency(int agencyIndex, char *domain) {
+    if (agencyIndex < 0 || agencyIndex >= newsAgencyCount) {
+        printf("Invalid agency index!\n");
+        return;
+    }
+    
+    for (int i = 0; i < newsAgencies[agencyIndex].domainCount; i++) {
+        if (strcmp(newsAgencies[agencyIndex].domains[i], domain) == 0) {
+            printf("Agency %s already publishes on domain: %s\n", 
+                   newsAgencies[agencyIndex].id, domain);
+            return;
+        }
+    }
+    
+    if (newsAgencies[agencyIndex].domainCount >= MAX_EVENT_TYPES) {
+        printf("Max domains reached for agency %s\n", newsAgencies[agencyIndex].id);
+        return;
+    }
+    
+    strcpy(newsAgencies[agencyIndex].domains[newsAgencies[agencyIndex].domainCount], domain);
+    newsAgencies[agencyIndex].domainCount++;
+    printf("Domain %s added to agency %s\n", domain, newsAgencies[agencyIndex].id);
+}
+
+// Register a person
+int registerPerson(char *personId) {
+    if (peopleCount >= MAX_PEOPLE) {
+        printf("Max people reached!\n");
+        return -1;
+    }
+    
+    strcpy(people[peopleCount].id, personId);
+    people[peopleCount].domainCount = 0;
+    
+    printf("Person %s registered\n", personId);
+    return peopleCount++;
+}
+
+void personNewsHandler(Event *event) {
+    News *news = (News *)event->data;
+    
+    // Find the person from the subscriber ID (format: "Person_personId")
+    char personId[MAX_ID_LENGTH];
+    sscanf(event->sourceId, "Person_%s", personId);
+    
+    printf("[News Reception] %s received news in domain %s from %s: %s\n", 
+           personId, news->domain, news->agency, news->content);
+}
+
+// Person subscribes to a domain
+void personSubscribeToDomain(int personIndex, char *domain) {
+    if (personIndex < 0 || personIndex >= peopleCount) {
+        printf("Invalid person index!\n");
+        return;
+    }
+    
+    for (int i = 0; i < people[personIndex].domainCount; i++) {
+        if (strcmp(people[personIndex].interestedDomains[i], domain) == 0) {
+            printf("Person %s already subscribed to domain: %s\n", 
+                   people[personIndex].id, domain);
+            return;
+        }
+    }
+    
+    if (people[personIndex].domainCount >= MAX_EVENT_TYPES) {
+        printf("Max domains reached for person %s\n", people[personIndex].id);
+        return;
+    }
+    
+    strcpy(people[personIndex].interestedDomains[people[personIndex].domainCount], domain);
+    people[personIndex].domainCount++;
+    
+    // Also subscribe this person to the EventBus for this domain
+    char subscriberId[MAX_ID_LENGTH];
+    sprintf(subscriberId, "Person_%s", people[personIndex].id);
+    subscribe(subscriberId, domain, personNewsHandler);
+    
+    printf("Person %s subscribed to domain: %s\n", people[personIndex].id, domain);
+}
+
+// Person unsubscribes from a domain
+void personUnsubscribeFromDomain(int personIndex, char *domain) {
+    if (personIndex < 0 || personIndex >= peopleCount) {
+        printf("Invalid person index!\n");
+        return;
+    }
+    
+    int domainFound = -1;
+    for (int i = 0; i < people[personIndex].domainCount; i++) {
+        if (strcmp(people[personIndex].interestedDomains[i], domain) == 0) {
+            domainFound = i;
+            break;
+        }
+    }
+    
+    if (domainFound == -1) {
+        printf("Person %s not subscribed to domain: %s\n", people[personIndex].id, domain);
+        return;
+    }
+    
+    // Remove this domain by shifting the remaining ones
+    for (int i = domainFound; i < people[personIndex].domainCount - 1; i++) {
+        strcpy(people[personIndex].interestedDomains[i], people[personIndex].interestedDomains[i + 1]);
+    }
+    people[personIndex].domainCount--;
+    
+    // Also unsubscribe this person from the EventBus for this domain
+    char subscriberId[MAX_ID_LENGTH];
+    sprintf(subscriberId, "Person_%s", people[personIndex].id);
+    unsubscribe(subscriberId, domain);
+    
+    printf("Person %s unsubscribed from domain: %s\n", people[personIndex].id, domain);
+}
+
+// Handle news events for people
+
+
+// Publish news from an agency
+void publishNews(int agencyIndex, char *domain, char *content) {
+    if (agencyIndex < 0 || agencyIndex >= newsAgencyCount) {
+        printf("Invalid agency index!\n");
+        return;
+    }
+    
+    // Check if agency publishes in this domain
+    int domainFound = 0;
+    for (int i = 0; i < newsAgencies[agencyIndex].domainCount; i++) {
+        if (strcmp(newsAgencies[agencyIndex].domains[i], domain) == 0) {
+            domainFound = 1;
+            break;
+        }
+    }
+    
+    if (!domainFound) {
+        printf("Agency %s does not publish in domain: %s\n", 
+               newsAgencies[agencyIndex].id, domain);
+        return;
+    }
+    
+    // Create news
+    News *news = malloc(sizeof(News));
+    strcpy(news->domain, domain);
+    strcpy(news->content, content);
+    strcpy(news->agency, newsAgencies[agencyIndex].id);
+    news->timestamp = time(NULL);
+    
+    // Publish event
+    publish(domain, news, newsAgencies[agencyIndex].id);
 }
 
 // Sensor simulation
@@ -135,6 +352,8 @@ void numericDisplayHandler(Event *event) {
 void maxValueDisplayHandler(Event *event) {
     static float maxTemp = -999.9, maxHumidity = -999.9, maxWater = -999.9;
     float *value = (float *)event->data;
+
+    printf("[MaxValueDisplay] Received %s: %.2f from %s\n", event->type, *value, event->sourceId);
 
     if (strcmp(event->type, "Temperature") == 0 && *value > maxTemp) {
         maxTemp = *value;
@@ -173,7 +392,54 @@ int main() {
     simulateSensorReading("Temperature", "TemperatureSensorTimisoara");
     simulateSensorReading("Temperature", "TemperatureSensorArad");
     simulateSensorReading("WaterLevel", "WaterLevelSensorTimisoara");
+    simulateSensorReading("WaterLevel", "WaterLevelSensorArad");
+    simulateSensorReading("Humidity", "HumiditySensorTimisoara");
     simulateSensorReading("Humidity", "HumiditySensorArad");
+    
+    // Create news agencies
+    printf("\n--- Setting up News Agencies ---\n");
+    int bbcIndex = registerNewsAgency("BBC");
+    addDomainToAgency(bbcIndex, "Politics");
+    addDomainToAgency(bbcIndex, "Sports");
+    addDomainToAgency(bbcIndex, "Culture");
+    
+    int cnnIndex = registerNewsAgency("CNN");
+    addDomainToAgency(cnnIndex, "Politics");
+    addDomainToAgency(cnnIndex, "Business");
+    
+    int espnIndex = registerNewsAgency("ESPN");
+    addDomainToAgency(espnIndex, "Sports");
+    
+    // Register people
+    printf("\n--- Registering People ---\n");
+    int aliceIndex = registerPerson("Alice");
+    personSubscribeToDomain(aliceIndex, "Politics");
+    personSubscribeToDomain(aliceIndex, "Business");
+    
+    int bobIndex = registerPerson("Bob");
+    personSubscribeToDomain(bobIndex, "Sports");
+    
+    int charlieIndex = registerPerson("Charlie");
+    personSubscribeToDomain(charlieIndex, "Politics");
+    personSubscribeToDomain(charlieIndex, "Culture");
+    personSubscribeToDomain(charlieIndex, "Sports");
+    
+    // Publish some news
+    printf("\n--- Publishing News ---\n");
+    publishNews(bbcIndex, "Politics", "New election results announced today");
+    publishNews(cnnIndex, "Business", "Stock market reaches all-time high");
+    publishNews(espnIndex, "Sports", "Local team wins championship");
+    publishNews(bbcIndex, "Culture", "New museum exhibition opens next week");
+    
+    // Charlie changes subscriptions
+    printf("\n--- Updating Subscriptions ---\n");
+    personUnsubscribeFromDomain(charlieIndex, "Sports");
+    personSubscribeToDomain(charlieIndex, "Business");
+    
+    // Publish more news
+    printf("\n--- Publishing More News ---\n");
+    publishNews(bbcIndex, "Sports", "Tennis tournament final results");
+    publishNews(cnnIndex, "Business", "New economic forecast released");
     
     return 0;
 }
