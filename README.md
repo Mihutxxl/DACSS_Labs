@@ -46,3 +46,17 @@ Subscriber components register for different types of events. The EventBus infra
 Subscriber components do not need to know in advance the Publisher components that generate the events they subscribe to, and Publisher components do not need to know the Subscriber components that receive notifications
 Event types are not fixed in advance, each application can define its own system of event types.
 In a very simple implementation of the BasicEventBus, there is a fixed Subscriber interface that must be implemented by any component that wants to be a subscriber to some event types. The class diagram of such a BasicEventBus is given in Lecture3 slides
+
+# Lab 3
+Assignment 3: The Reflection Pattern - Track A: Using reflective features of programming languages
+MyReverseEngineeringTool
+This is one of the choices for Assignment 3.
+
+Objectives: Using reflective properties of programming languages - using Introspection
+
+Assignment description
+Using reflective capabilities of java (java.lang.reflection) or .NET (System.Reflection) implement a simple reverse engineering tool to extract design information from compiled code.
+Requirements
+Standard requirements: The tool accepts as command line arguments the name of a compiled file (could be a *.jar file or a *.dll / *.exe file) and extracts all informations that are needed to describe the class diagram of the classes contained in this file. The standard requirement is to display (in a textual representation of your choice) all the informations that would go into the class diagram: classes, interfaces, methods, fields, relationships between classes/interfaces.
+
+For Java implementation: In order to work with jar files use the utility class java.util.jar.JarFile to open a jar file. Use a URLClassLoader to load classes and retrieve the Class metaobjects. Use intensivly introspection to gather information.
