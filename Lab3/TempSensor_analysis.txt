@@ -1,0 +1,140 @@
+===============================================
+JAR Reverse Engineering Analysis
+JAR File: H:\Faculta\DACSS\labs\DACSS_Labs\Lab3\.\TempSensor.jar
+Date: Sat Apr 12 17:06:46 EEST 2025
+===============================================
+
+Found 7 classes in the JAR file.
+
+Successfully loaded 7 classes.
+
+===============================================
+CLASS DEFINITIONS
+===============================================
+
+
+===================================
+public class AverageDisplay
+  implements Observer
+{
+  // Fields
+  private float sum;
+  private int count;
+
+  // Constructors
+  public AverageDisplay();
+
+  // Methods
+  public void update(int param0);
+  public void display();
+}
+
+===================================
+public abstract interface interface Observer
+{
+  // Fields
+
+  // Constructors
+
+  // Methods
+  public abstract void update(int param0);
+}
+
+===================================
+public class TextDisplay
+  implements Observer
+{
+  // Fields
+  private int value;
+
+  // Constructors
+  public TextDisplay();
+
+  // Methods
+  public void update(int param0);
+  public void display();
+}
+
+===================================
+public class MainDriver
+{
+  // Fields
+
+  // Constructors
+  public MainDriver();
+
+  // Methods
+  public static void main([Ljava.lang.String; param0);
+}
+
+===================================
+public class NumericDisplay
+  implements Observer
+{
+  // Fields
+  private int value;
+
+  // Constructors
+  public NumericDisplay();
+
+  // Methods
+  public void update(int param0);
+  public void display();
+}
+
+===================================
+public abstract interface interface Subject
+{
+  // Fields
+
+  // Constructors
+
+  // Methods
+  public abstract void attach(Observer param0);
+  public abstract void detach(Observer param0);
+  public abstract void notifyObservers();
+}
+
+===================================
+public class TemperatureSensor
+  implements Subject
+{
+  // Fields
+  private java.util.ArrayList observers;
+  private int tempState;
+
+  // Constructors
+  public TemperatureSensor(int param0);
+
+  // Methods
+  public void attach(Observer param0);
+  public void detach(Observer param0);
+  public void notifyObservers();
+  public void setTemp(int param0);
+  public int getTemp();
+}
+
+===============================================
+CLASS RELATIONSHIPS
+===============================================
+
+
+AverageDisplay has relationships with:
+  implements Observer
+
+TextDisplay has relationships with:
+  implements Observer
+
+MainDriver has relationships with:
+  has method parameter of type [Ljava.lang.String;
+
+NumericDisplay has relationships with:
+  implements Observer
+
+Subject has relationships with:
+  has method parameter of type Observer
+
+TemperatureSensor has relationships with:
+  implements Subject
+  has field of type java.util.ArrayList
+  has method parameter of type Observer
